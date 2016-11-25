@@ -56,7 +56,7 @@ class Agent:
         self.env = gym.make(environment)
         self.init_img = self.env.render(mode='rgb_array')
         self.n_action = self.env.action_space.n
-        self.iw, self.ih, self.nin = self.init_img.shape
+        self.ih, self.iw, self.nin = self.init_img.shape
 
     def rollout(self, policy, n_episodes, n_timesteps):
         a = time.time()
@@ -64,6 +64,7 @@ class Agent:
         obs = []
         rewards = []
         actions = []
+        pdists = []
 
         for i_episode in range(n_episodes):
             observation = self.env.reset()
@@ -71,39 +72,42 @@ class Agent:
             # obs.append(observation)
             # imgs.append(img)
             for t in range(n_timesteps):
-                action = policy.single_decision(img)
+                action, pdist_na = policy.single_decision(img)
                 observation, reward, done, info = self.env.step(action)
                 img = self.env.render(mode='rgb_array')
                 imgs.append(img)
                 obs.append(observation)
                 rewards.append(reward)
                 actions.append(action)
+                pdists.append(pdist_na)
                 if done:
                     print("Episode finished after {} timesteops".format(t+1))
                     break
         tdiff = time.time() - a
-        print("Took {0} seconds to rollout {1} img, reward, action tuples.".format(tdiff,len(imgs)))
-        return imgs, obs, rewards, actions
+        ostr = "Took {0} seconds to rollout {1} img, reward, action tuples."
+        print(ostr.format(tdiff,len(imgs)))
+        return imgs, obs, rewards, actions, pdists
 
 
 class Policy:
-    def __init__(self, session, n_actions, iw, ih, nin):
+    def __init__(self, session, n_actions, ih, iw, nin):
         """
         Method:
-            __init__(self, session, n_actions, iw, ih, nin)
+            __init__(self, session, n_actions, ih, iw, nin)
         Args:
             self -- standard method
             session -- a TensorFlow session.
-            n_actions -- the dimension of the action space, assuming discrete bc Atari.
-            iw -- image width
+            n_actions -- the dimension of the action space, assumed to be
+                discrete because we're playing Atari.
             ih -- image height
+            iw -- image width
             nin -- input channels in image, typically 3 for rgb_array.
         Returns:
             None -- defines model from images to actions for class Policy.
         """
         self.session = session
         self.n_actions = n_actions
-        self.img_no = tf.placeholder(tf.float32, shape=[None, iw, ih, nin])
+        self.img_no = tf.placeholder(tf.float32, shape=[None, ih, iw, nin])
         self.a_n = tf.placeholder(tf.int32, shape=[None])
         self.q_n = tf.placeholder(tf.float32, shape=[None])
         self.oldpdist_np = tf.placeholder(tf.float32, shape=[None, n_actions])
@@ -111,10 +115,12 @@ class Policy:
         self.lam = tf.placeholder(tf.float32)
         self.n_batch = tf.shape(self.img_no)[0]
 
-
+        mu, var = tf.nn.moments(self.img_no,axes=[0,1,2,3])
+        normed_img = tf.nn.batch_normalization(
+            self.img_no, mu, var, None, None,1e-6)
 
         with tf.variable_scope("conv1"):
-            relu1 = conv_relu(self.img_no, [5,5,nin,24],[24], stride=2)
+            relu1 = conv_relu(normed_img, [5,5,nin,24],[24], stride=2)
 
         with tf.variable_scope("conv2"):
             relu2 = conv_relu(relu1, [5,5,24,36], [36], stride=2)
@@ -126,7 +132,8 @@ class Policy:
             relu4 = conv_relu(relu3, [5,5,64,64], [64], stride=2)
 
         with tf.variable_scope("avgpool1"):
-            avgpool1 = tf.nn.avg_pool(relu4, [1, 5, 5, 1], strides=[1,1,1,1], padding='VALID')
+            avgpool1 = tf.nn.avg_pool(relu4, [1, 5, 5, 1], strides=[1,1,1,1],
+                padding='VALID')
 
         avgpool1_shape = avgpool1.get_shape().as_list()
         avgpool1_flat_n = np.prod(avgpool1_shape[1:])
@@ -149,7 +156,8 @@ class Policy:
                 initializer=tf.random_normal_initializer())
             biases = tf.get_variable("biases", [n_actions],
                 initializer=tf.constant_initializer(0.0))
-            self.probs_na = tf.nn.softmax(tf.matmul(fc4_dropout, weights) + biases)
+            self.probs_na = tf.nn.softmax(tf.matmul(fc4_dropout, weights) \
+                + biases)
 
         self.pred_action = tf.argmax(self.probs_na, 1)
         logprobs_na = tf.log(self.probs_na)
@@ -165,7 +173,8 @@ class Policy:
 
         self.kl = tf.reduce_mean(
             tf.reduce_sum(
-                tf.mul(self.oldpdist_np, tf.log(tf.div(self.oldpdist_np, self.probs_na))), 1
+                tf.mul(self.oldpdist_np, tf.log(tf.div(self.oldpdist_np,
+                    self.probs_na))), 1
             )
         )
         penobj = tf.sub(self.surr, tf.mul(self.lam, self.kl))
@@ -182,19 +191,20 @@ class Policy:
         Returns:
             action -- an integer in [0, n_actions-1]
         """
-        iw, ih, nin = image.shape
+        ih, iw, nin = image.shape
         n_actions = self.n_actions
 
         feed_dict = {
-        self.img_no:image.reshape(1,iw,ih,nin),
+        self.img_no:image.reshape(1,ih,iw,nin),
         self.a_n:np.zeros((1,),dtype=np.int32), # Dummy placeholder, not used.
         self.q_n:np.zeros((1,),dtype=np.float32),
         self.oldpdist_np:np.zeros((1,n_actions),dtype=np.float32),
         self.keep_prob:1.0, # Don't drop any connections when just predicting!
         self.lam:1.0
         }
-        [action] = self.session.run([self.pred_action],feed_dict=feed_dict)
-        return action[0]
+        [action, pdist_na] = self.session.run([self.pred_action, self.probs_na],
+            feed_dict=feed_dict)
+        return action[0], pdist_na
 
 
 
@@ -205,9 +215,9 @@ def test_Policy():
     """
     # Start an interactive session.
     session = tf.InteractiveSession()
-    n_actions, iw, ih, nin = (18, 210, 160, 3)
+    n_actions, ih, iw, nin = (18, 210, 160, 3)
     # Initialize policy.
-    policy = Policy(session, n_actions, iw, ih, nin)
+    policy = Policy(session, n_actions, ih, iw, nin)
 
     # Initialize variables in policy.
     policy.session.run(tf.global_variables_initializer())
@@ -225,18 +235,18 @@ def test_Agent():
     """
     # Start an interactive session.
     session=tf.InteractiveSession()
-    n_actions, iw, ih, nin = (18, 210, 160, 3)
+    n_actions, ih, iw, nin = (18, 210, 160, 3)
 
-    policy = Policy(session, n_actions, iw, ih, nin)
+    policy = Policy(session, n_actions, ih, iw, nin)
 
     policy.session.run(tf.global_variables_initializer())
 
     environment = 'Boxing-ram-v0'
     agent = Agent(environment)
-    n_episodes = 10
+    n_episodes = 2
     n_timesteps = 2000
 
-    imgs, obs, rewards, actions = agent.rollout(policy, n_episodes, n_timesteps)
+    imgs, obs, rewards, actions, pdists = agent.rollout(policy, n_episodes, n_timesteps)
 
     print("{0}, {1}, {2}, {3}".format(len(imgs),len(obs),len(rewards),len(actions)))
 
