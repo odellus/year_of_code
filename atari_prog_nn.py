@@ -6,6 +6,8 @@ import gym
 import numpy as np
 from matplotlib import pyplot as plt
 from param_collection import ParamCollection
+import time
+
 
 # Define a TensorFlow model that takes in an image and outputs an action
 # to be fed to an OpenAI Gym environment.
@@ -50,15 +52,38 @@ def fc_relu(flat_input, nin, nout):
 
 
 class Agent:
-    def __init__(self, environment, policy):
+    def __init__(self, environment):
         self.env = gym.make(environment)
         self.init_img = self.env.render(mode='rgb_array')
         self.n_action = self.env.action_space.n
         self.iw, self.ih, self.nin = self.init_img.shape
 
     def rollout(self, policy, n_episodes, n_timesteps):
-        pass
+        a = time.time()
+        imgs = []
+        obs = []
+        rewards = []
+        actions = []
 
+        for i_episode in range(n_episodes):
+            observation = self.env.reset()
+            img = self.env.render(mode='rgb_array')
+            # obs.append(observation)
+            # imgs.append(img)
+            for t in range(n_timesteps):
+                action = policy.single_decision(img)
+                observation, reward, done, info = self.env.step(action)
+                img = self.env.render(mode='rgb_array')
+                imgs.append(img)
+                obs.append(observation)
+                rewards.append(reward)
+                actions.append(action)
+                if done:
+                    print("Episode finished after {} timesteops".format(t+1))
+                    break
+        tdiff = time.time() - a
+        print("Took {0} seconds to rollout {1} img, reward, action tuples.".format(tdiff,len(imgs)))
+        return imgs, obs, rewards, actions
 
 
 class Policy:
@@ -85,6 +110,8 @@ class Policy:
         self.keep_prob = tf.placeholder(tf.float32)
         self.lam = tf.placeholder(tf.float32)
         self.n_batch = tf.shape(self.img_no)[0]
+
+
 
         with tf.variable_scope("conv1"):
             relu1 = conv_relu(self.img_no, [5,5,nin,24],[24], stride=2)
@@ -117,15 +144,13 @@ class Policy:
         with tf.variable_scope("fc4"):
             fc4 = fc_relu(fc3_dropout, 128, 64)
             fc4_dropout = tf.nn.dropout(fc4, self.keep_prob)
-        with tf.variable_scope("fc5"):
+        with tf.variable_scope("probs_na"):
             weights = tf.get_variable("weights", [64, n_actions],
                 initializer=tf.random_normal_initializer())
             biases = tf.get_variable("biases", [n_actions],
                 initializer=tf.constant_initializer(0.0))
-            fc5 = tf.nn.softmax(tf.matmul(fc4_dropout, weights) + biases)
+            self.probs_na = tf.nn.softmax(tf.matmul(fc4_dropout, weights) + biases)
 
-
-        self.probs_na = fc5
         self.pred_action = tf.argmax(self.probs_na, 1)
         logprobs_na = tf.log(self.probs_na)
         idx_flattened = tf.range(0,self.n_batch) * n_actions + self.a_n
@@ -150,7 +175,7 @@ class Policy:
     def single_decision(self, image):
         """
         Method:
-            single_decison(self, image)
+            single_decision(self, image)
         Args:
             self -- standard
             image -- a single image from an Atari game to make a decision on.
@@ -162,10 +187,10 @@ class Policy:
 
         feed_dict = {
         self.img_no:image.reshape(1,iw,ih,nin),
-        self.a_n:np.zeros((1,),dtype=np.int32),
+        self.a_n:np.zeros((1,),dtype=np.int32), # Dummy placeholder, not used.
         self.q_n:np.zeros((1,),dtype=np.float32),
         self.oldpdist_np:np.zeros((1,n_actions),dtype=np.float32),
-        self.keep_prob:1.0,
+        self.keep_prob:1.0, # Don't drop any connections when just predicting!
         self.lam:1.0
         }
         [action] = self.session.run([self.pred_action],feed_dict=feed_dict)
@@ -173,8 +198,11 @@ class Policy:
 
 
 
-def test_Policy():
 
+
+def test_Policy():
+    """
+    """
     # Start an interactive session.
     session = tf.InteractiveSession()
     n_actions, iw, ih, nin = (18, 210, 160, 3)
@@ -192,5 +220,31 @@ def test_Policy():
     theta = policy.pc.get_values_flat()
     print(theta.shape)
 
+def test_Agent():
+    """
+    """
+    # Start an interactive session.
+    session=tf.InteractiveSession()
+    n_actions, iw, ih, nin = (18, 210, 160, 3)
+
+    policy = Policy(session, n_actions, iw, ih, nin)
+
+    policy.session.run(tf.global_variables_initializer())
+
+    environment = 'Boxing-ram-v0'
+    agent = Agent(environment)
+    n_episodes = 10
+    n_timesteps = 2000
+
+    imgs, obs, rewards, actions = agent.rollout(policy, n_episodes, n_timesteps)
+
+    print("{0}, {1}, {2}, {3}".format(len(imgs),len(obs),len(rewards),len(actions)))
+
+
+
 if __name__ == "__main__":
-    test_Policy()
+    # See how well it rolls out.
+    with tf.variable_scope("testing") as scope:
+        test_Policy()
+        scope.reuse_variables()
+        test_Agent()
