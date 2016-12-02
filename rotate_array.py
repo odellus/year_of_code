@@ -6,5 +6,7 @@ def solution(A, K):
     if N == 0:
         return A
     u = (K % N)
-
-    return A[-u:] + A[:N-u]
+    if u == 0:
+        return A
+    else:
+        return A[-u:] + A[:N-u]
