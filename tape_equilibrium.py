@@ -5,13 +5,12 @@ def solution(A):
     import sys
     if len(A) == 2:
         return abs(A[0] - A[1])
-
+    # Scan the array so you know what lies where in terms of sums.
     scan = []
     s = 0
     for x in A:
         s += x
-        scan.append(s)
-        
+        scan.append(s) #inclusive scan.
 
     mindiff = sys.maxint
     for x in scan[:-1]:
