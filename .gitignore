@@ -1,4 +1,5 @@
 *.pyc
 swig/*.so
-swig/*.py
 swig/build/*
+swig/inplace/build/*
+swig/inplace/*.so
