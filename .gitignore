@@ -1,1 +1,4 @@
 *.pyc
+swig/*.so
+swig/*.py
+swig/build/*
