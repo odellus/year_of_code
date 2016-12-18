@@ -26,7 +26,7 @@ int mindex3(int x, int y, int z, int sizx, int sizy, int sizz, int wrap)
     return index;
 }
 
-int *_draw_or_split(int *Volume, double AX, double AY, double, AZ,
+double *draw_or_split(double *Volume, double AX, double AY, double, AZ,
     double BX, double BY, double BZ, double CX, double CY, double CZ,
     int *VolumeSize, int wrap)
 {
