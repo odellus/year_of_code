@@ -26,7 +26,7 @@ int mindex3(int x, int y, int z, int sizx, int sizy, int sizz, int wrap)
     return index;
 }
 
-double *draw_or_split(double *Volume, double AX, double AY, double, AZ,
+void draw_or_split(double *Volume, double AX, double AY, double, AZ,
     double BX, double BY, double BZ, double CX, double CY, double CZ,
     int *VolumeSize, int wrap)
 {
@@ -51,7 +51,7 @@ double *draw_or_split(double *Volume, double AX, double AY, double, AZ,
 
         // Return if all vertices outside, on the same side.
         if (check1||check2||check3||check4||check5||check6) {
-            return Volume;
+            return;
         }
     }
 
@@ -63,16 +63,16 @@ double *draw_or_split(double *Volume, double AX, double AY, double, AZ,
             maxdist = dist1;
             if (maxdist > 0.5) {
                 DX=(AX+BX)/2; DY=(AY+BY)/2; DZ=(AZ+BZ)/2;
-                Volume=draw_or_split(Volume, DX, DY, DZ, BX, BY, BZ, CX, CY, CZ, VolumeSize, wrap);
-                Volume=draw_or_split(Volume, AX, AY, AZ, DX, DY, DZ, CX, CY, CZ, VolumeSize, wrap);
+                draw_or_split(Volume, DX, DY, DZ, BX, BY, BZ, CX, CY, CZ, VolumeSize, wrap);
+                draw_or_split(Volume, AX, AY, AZ, DX, DY, DZ, CX, CY, CZ, VolumeSize, wrap);
             }
         }
         else {
             maxdist = dist3;
             if (maxdist > 0.5) {
                 DX=(AX+CX)/2; DY=(AY+CY)/2; DZ=(AZ+CZ)/2;
-                Volume=draw_or_split(Volume, DX, DY, DZ, BX, BY, BZ, CX, CY, CZ, VolumeSize, wrap);
-                Volume=draw_or_split(Volume, AX, AY, AZ, BX, BY, BZ, DX, DY, DZ, VolumeSize, wrap);
+                draw_or_split(Volume, DX, DY, DZ, BX, BY, BZ, CX, CY, CZ, VolumeSize, wrap);
+                draw_or_split(Volume, AX, AY, AZ, BX, BY, BZ, DX, DY, DZ, VolumeSize, wrap);
             }
         }
     }
@@ -81,16 +81,16 @@ double *draw_or_split(double *Volume, double AX, double AY, double, AZ,
             maxdist=dist2;
             DX=(CX+BX)/2; DY=(CY+BY)/2; DZ=(CZ+BZ)/2;
             if (maxdist > 0.5) {
-                Volume=draw_or_split(Volume, AX, AY, AZ, DX, DY, DZ, CX, CY, CZ, VolumeSize, wrap);
-                Volume=draw_or_split(Volume, AX, AY, AZ, BX, BY, BZ, DX, DY, DZ, VolumeSize, wrap);
+                draw_or_split(Volume, AX, AY, AZ, DX, DY, DZ, CX, CY, CZ, VolumeSize, wrap);
+                draw_or_split(Volume, AX, AY, AZ, BX, BY, BZ, DX, DY, DZ, VolumeSize, wrap);
             }
         }
         else {
             maxdist=dist3;
             if (maxdist > 0.5) {
                 DX=(AX+CX)/2; DY=(AY+CY)/2; DZ=(AZ+CZ)/2;
-                Volume=draw_or_split(Volume, DX, DY, DZ, BX, BY, BZ, CX, CY, CZ, VolumeSize, wrap);
-                Volume=draw_or_split(Volume, AX, AY, AZ, BX, BY, BZ, DX, DY, DZ, VolumeSize, wrap);
+                draw_or_split(Volume, DX, DY, DZ, BX, BY, BZ, CX, CY, CZ, VolumeSize, wrap);
+                draw_or_split(Volume, AX, AY, AZ, BX, BY, BZ, DX, DY, DZ, VolumeSize, wrap);
             }
         }
     }
@@ -112,5 +112,5 @@ double *draw_or_split(double *Volume, double AX, double AY, double, AZ,
         Volume[mindex3((int)(BX+0.5), (int)(BY+0.5), (int)(BZ+0.5), VolumeSize[0], VolumeSize[1], VolumeSize[2], wrap)]=1;
         Volume[mindex3((int)(CX+0.5), (int)(CY+0.5), (int)(CZ+0.5), VolumeSize[0], VolumeSize[1], VolumeSize[2], wrap)]=1;
     }
-    return Volume;
+    return;
 }
