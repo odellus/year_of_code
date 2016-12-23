@@ -4,11 +4,11 @@
 int solution(vector<int> &A) {
     // write your code in C++14 (g++ 6.2.0)
     int n = A.size();
-    vector<int> scan;
+    int scan[n];
 
     int s = 0;
     for (int j=0; j < n; j++) {
-        scan.push_back(s);
+        scan[j];
         s += A[j];
     }
 
