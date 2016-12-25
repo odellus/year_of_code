@@ -6,4 +6,4 @@ I've been looking at open source 3d printer designs on Thingiverse that I can pu
 $500 is just the price I've paid to get started down to path to 3D printerdom and desktop manufacturing glory.
 
 23 Dec 2016, 22:34
-I've been working on translating the polygon2voxel codes written in C and Matlab over to NumPy.
+I've been working on translating the polygon2voxel codes written in C and Matlab over to NumPy. I copied the C code pretty much verbatim and now I'm just learning about SWIG and numpy.i type maps. 
