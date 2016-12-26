@@ -10,12 +10,12 @@ vector<int> solution(string &A, vector<int> &P, vector<int> &Q) {
     int n = A.size();
     int m = P.size();
     vector<int> res;
-
     int j, k;
+    string cut;
     for (int i=0; i < m; i++) {
         j = P[i];
         k = Q[i];
-        string cut = A.substr(j,k-j+1);
+        cut = A.substr(j,k-j+1);
 
         string key = to_string(j) + "_" + to_string(k);
         if (h.find(key) == h.end()) {
