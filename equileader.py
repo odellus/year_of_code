@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 def solution(A):
-
+    n = len(A)
     h = {}
     for x in A:
         if x not in h:
@@ -11,8 +11,10 @@ def solution(A):
 
 
 
-    m1 = -float("inf")
-    m2 = [x for x in h.keys() if h[x] == max(h.values())][0]
+    m1_occur = -float("inf")
+    m1_val = -1
+    m2_occur = max(h.values())
+    m2_val = [x for x in h.keys() if h[x] == m2_occur][0]
 
     equis = 0
     d = {}
@@ -22,5 +24,11 @@ def solution(A):
             d[x] = 1
         else:
             d[x] += 1
+        if d[x] > m1_occur:
+            m1_occur = d[x]
+            m1_val = x
 
-        
+        if m1_occur > (k+1) / 2.0 and h[m2_val] > (n-1-k)/2.0 and m2_val == m1_val:
+            equis += 1
+
+    return equis
