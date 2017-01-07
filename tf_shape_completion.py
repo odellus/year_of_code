@@ -2,6 +2,9 @@
 File: tf_shape_completion.py
 
 Author: Thomas Wood, thomas@synpon.com
+
+Description: The same network used to evaluate 3D volumes of voxel as the paper
+             https://arxiv.org/abs/1609.08546.
 """
 
 import tensorflow as tf
