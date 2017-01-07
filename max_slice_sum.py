@@ -8,14 +8,14 @@ def solution(A):
     if len(A) == 2:
         a1, a2 = A
         a3 = sum(A)
-        return max(a1,a2, a3)
+        return max(a1,a2,a3)
 
     if len(A) == 3:
         a1, a2, a3 = A
         a4 = a1 + a2
-        a6 = a2 + a3
-        a7 = sum(A)
-        return max(a1,a2,a3,a4,a6,a7)
+        a5 = a2 + a3
+        a6 = sum(A)
+        return max(a1,a2,a3,a4,a5,a6)
 
     s = 0
     m = -sys.maxint
