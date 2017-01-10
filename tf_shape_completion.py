@@ -9,7 +9,7 @@ Description: The same network used to evaluate 3D volumes of voxel as the paper
 
 import tensorflow as tf
 
-def conv3d(input_, kh, kw, kd, output_cdim, stride=1, scope=None, with_w=False):
+def conv3d(input_, kd, kh, kw, output_cdim, stride=1, scope=None, with_w=False):
     input_cdim = input_.get_shape().as_list()[-1]
     with tf.variable_scope(scope):
         w = tf.get_variable("weights",
@@ -46,10 +46,7 @@ class ShapeNet:
 
         self.x_ = tf.placeholder(tf.float32, shape=[self.batch_size, 40, 40, 40, 1], name="input")
 
-        # Commenting out the target and loss functions. This is just a forward
-        # model.
-
-        # self.y_ = tf.placeholder(tf.float32, shape=[self.batch_size, 40,40,40,1], name="target")
+        self.y_ = tf.placeholder(tf.float32, shape=[self.batch_size, 40,40,40,1], name="target")
 
         self.build_model()
         # self.loss = tf.nn.sigmoid_cross_entropy_with_logits(self.y, self.y_)
@@ -61,7 +58,7 @@ class ShapeNet:
         # Bring the input placeholder in to local variable from the class.
         x = self.x_
 
-        # Perform 2 3D convolution without max pooling.
+        # Perform 2 3D convolutions without max pooling.
         x = tf.nn.relu(conv3d(x, 4, 4, 4, 64, scope="conv_1"))
         x = tf.nn.relu(conv3d(x, 4, 4, 4, 64, scope="conv_2"))
 
@@ -87,5 +84,9 @@ class ShapeNet:
 
         x = tf.reshape(x, [self.batch_size, 40, 40, 40, 1])
 
-        self.y = x
+        self.logits = x
         self.t_vars = tf.trainable_variables()
+
+    def calculate_loss(self):
+        self.loss = tf.nn.sigmoid_cross_entropy_with_logits(self.logits, self.y_)
+        self.gradients = tf.gradients(self.loss, self.t_vars)
