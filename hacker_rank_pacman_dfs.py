@@ -1,37 +1,38 @@
 #!/usr/bin/python
+def search_neighb(r, c, grid):
+    if len(grid) < 1:
+        return []
+    grid_r = len(grid)
+    grid_c = len(grid[0])
+    nodes = []
+    if r - 1 > 0:
+        u = grid[r-1][c]
+        if u != '%':
+            tup = (u, r-1, c)
+            nodes.append(tup)
+    if r + 1 < len(grid):
+        u = grid[r+1][c]
+        if u != '%':
+            tup = (u, r+1, c)
+            nodes.append(tup)
+    if c - 1 > 0:
+        u = grid[r][c-1]
+        if u != '%':
+            tup = (u, r, c-1)
+            nodes.append(tup)
+    if c + 1 < len(grid[0]):
+        u = grid[r][c+1]
+        if u != '%':
+            tup = (u, r, c+1)
+            nodes.append(tup)
+
+    return nodes
+
+def key_gen(x,y):
+    return str(x) + '_' + str(y)
+
 def dfs( r, c, pacman_r, pacman_c, food_r, food_c, grid):
-    def search_neighb(r, c, grid):
-        if len(grid) < 1:
-            return []
-        grid_r = len(grid)
-        grid_c = len(grid[0])
-        nodes = []
-        if r - 1 > 0:
-            u = grid[r-1][c]
-            if u != '%':
-                tup = (u, r-1, c)
-                nodes.append(tup)
-        if r + 1 < len(grid):
-            u = grid[r+1][c]
-            if u != '%':
-                tup = (u, r+1, c)
-                nodes.append(tup)
-        if c - 1 > 0:
-            u = grid[r][c-1]
-            if u != '%':
-                tup = (u, r, c-1)
-                nodes.append(tup)
-        if c + 1 < len(grid[0]):
-            u = grid[r][c+1]
-            if u != '%':
-                tup = (u, r, c+1)
-                nodes.append(tup)
-
-        return nodes
-    def key_gen(x,y):
-        return str(x) + '_' + str(y)
-
-    d = 0
+    d = 1
     visited = {}
     u = grid[pacman_r][pacman_c]
     path = []
@@ -53,10 +54,14 @@ def dfs( r, c, pacman_r, pacman_c, food_r, food_c, grid):
                 path.append(node)
                 for x in path:
                     print x[1], x[2]
-                return
+                stack = []
+                break
             if node_key not in visited:
                 visited[node_key] = 1
                 stack.append(node)
+    print d-1
+    for x in path:
+        print x[1], x[2]
     return
 
 
