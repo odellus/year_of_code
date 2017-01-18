@@ -8,6 +8,7 @@ Description: The same network used to evaluate 3D volumes of voxel as the paper
 """
 
 import tensorflow as tf
+import numpy as np
 
 def conv3d(input_, kd, kh, kw, output_cdim, stride=1, scope=None, with_w=False):
     input_cdim = input_.get_shape().as_list()[-1]
@@ -90,3 +91,18 @@ class ShapeNet:
     def calculate_loss(self):
         self.loss = tf.nn.sigmoid_cross_entropy_with_logits(self.logits, self.y_)
         self.gradients = tf.gradients(self.loss, self.t_vars)
+
+
+def test_shapenet():
+    batch_size = 25
+    kd = kw = kh = 40
+    nchannels = 1
+    sn = ShapeNet(batch_size)
+    dummy_x = np.random.randint(0,2,size=(batch_size, kd, kh, kw, nchannels))
+    dummy_y = np.random.randint(0,2,size=(batch_size, kd, kh, kw, nchannels))
+    session = tf.Session()
+    feed_dict = {sn.x_:dummy_x, sn.y_:dummy_y}
+    # res = session.run(tf.)
+
+if __name__ == "__main__":
+    test_shapenet()
