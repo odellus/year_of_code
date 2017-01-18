@@ -42,14 +42,17 @@ def maxpool3d(input_, kd, kh, kw, stride=1,scope=None):
         strides=[1,stride,stride,stride,1], padding="VALID", name=scope)
 
 class ShapeNet:
-    def __init__(self, batch_size):
+    def __init__(self, batch_size, kd=40, zdim=5000):
         self.batch_size = batch_size
+        self.kd = kd
+        self.zdim = zdim
 
-        self.x_ = tf.placeholder(tf.float32, shape=[self.batch_size, 40, 40, 40, 1], name="input")
+        self.x_ = tf.placeholder(tf.float32, shape=[self.batch_size, kd, kd, kd, 1], name="input")
 
-        self.y_ = tf.placeholder(tf.float32, shape=[self.batch_size, 40,40,40,1], name="target")
+        self.y_ = tf.placeholder(tf.float32, shape=[self.batch_size, kd, kd, kd, 1], name="target")
 
         self.build_model()
+        self.calculate_loss()
         # self.loss = tf.nn.sigmoid_cross_entropy_with_logits(self.y, self.y_)
 
     def build_model(self):
@@ -58,6 +61,9 @@ class ShapeNet:
         """
         # Bring the input placeholder in to local variable from the class.
         x = self.x_
+        kd = self.kd
+        batch_size = self.batch_size
+        zdim = self.zdim
 
         # Perform 2 3D convolutions without max pooling.
         x = tf.nn.relu(conv3d(x, 4, 4, 4, 64, scope="conv_1"))
@@ -73,17 +79,17 @@ class ShapeNet:
         x = maxpool3d(x, 2, 2, 2, scope="max_pool_2")
 
         # Flatten for use in fully connected layers.
-        x = tf.reshape(x, [self.batch_size, -1])
+        x = tf.reshape(x, [batch_size, -1])
 
         # Intermediate fc layer.
-        x = tf.nn.relu(linear(x, 5000, scope="fc_1"))
+        x = tf.nn.relu(linear(x, zdim, scope="fc_1"))
 
         # Expand back out to a flat 40**3 vector with another fc layers.
-        x = tf.nn.sigmoid(linear(x, 40**3, scope="fc_2"))
+        x = tf.nn.sigmoid(linear(x, kd**3, scope="fc_2"))
 
         # Reshape back to batch_size X 40 X 40 X 40 X 1
 
-        x = tf.reshape(x, [self.batch_size, 40, 40, 40, 1])
+        x = tf.reshape(x, [batch_size, kd, kd, kd, 1])
 
         self.logits = x
         self.t_vars = tf.trainable_variables()
@@ -94,15 +100,20 @@ class ShapeNet:
 
 
 def test_shapenet():
-    batch_size = 25
-    kd = kw = kh = 40
+    batch_size = 1
+    kd = kw = kh = 20
     nchannels = 1
-    sn = ShapeNet(batch_size)
+    sn = ShapeNet(batch_size, kd)
+    print kd
     dummy_x = np.random.randint(0,2,size=(batch_size, kd, kh, kw, nchannels))
     dummy_y = np.random.randint(0,2,size=(batch_size, kd, kh, kw, nchannels))
-    session = tf.Session()
+    sess = tf.Session()
     feed_dict = {sn.x_:dummy_x, sn.y_:dummy_y}
-    # res = session.run(tf.)
+    sess.run(tf.global_variables_initializer())
+    res = sess.run([sn.loss, sn.logits], feed_dict)
+    print len(res)
+
+
 
 if __name__ == "__main__":
     test_shapenet()
