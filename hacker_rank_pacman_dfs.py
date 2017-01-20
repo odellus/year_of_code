@@ -64,7 +64,36 @@ def dfs( r, c, pacman_r, pacman_c, food_r, food_c, grid):
         print x[1], x[2]
     return
 
-
+def bfs(r, c, pacman_r, pacman_c, food_r, food_c, grid):
+    d = 1
+    visited = {}
+    u = grid[pacman_r][pacman_c]
+    path = []
+    queue = [(u, pacman_r, pacman_c)]
+    while queue != []:
+        path.append(queue[0])
+        t_val, t_r, t_c = queue.pop(0)
+        t_key = key_gen(t_r, t_c)
+        visited[t_key] = 1
+        d += 1
+        nodes = search_neighb(t_r, t_c, grid)
+        for node in nodes:
+            node_val, node_r, node_c = node
+            node_key = key_gen(node_r, node_c)
+            if node_val == '.':
+                print(d)
+                path.append(node)
+                for x in path:
+                    print(x[1], x[2])
+                queue = []
+                break
+            if node_key not in visited:
+                visited[node_key] = 1
+                queue.append(node)
+    print d-1
+    for x in path:
+        print(x[1], x[2])
+    return
 
 pacman_r, pacman_c = [ int(i) for i in raw_input().strip().split() ]
 food_r, food_c = [ int(i) for i in raw_input().strip().split() ]
