@@ -3,7 +3,7 @@ File: tf_shape_completion.py
 
 Author: Thomas Wood, thomas@synpon.com
 
-Description: The same network used to evaluate 3D volumes of voxel as the paper
+Description: The same network used to evaluate 3D volumes of voxels as the paper
              https://arxiv.org/abs/1609.08546.
 """
 
@@ -104,14 +104,14 @@ def test_shapenet():
     kd = kw = kh = 20
     nchannels = 1
     sn = ShapeNet(batch_size, kd)
-    print kd
+    print(kd)
     dummy_x = np.random.randint(0,2,size=(batch_size, kd, kh, kw, nchannels))
     dummy_y = np.random.randint(0,2,size=(batch_size, kd, kh, kw, nchannels))
     sess = tf.Session()
     feed_dict = {sn.x_:dummy_x, sn.y_:dummy_y}
     sess.run(tf.global_variables_initializer())
     res = sess.run([sn.loss, sn.logits], feed_dict)
-    print len(res)
+    print(len(res))
 
 
 
