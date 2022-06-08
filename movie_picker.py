@@ -56,7 +56,9 @@ def time_algo(flight_length=240):
         test_picks(flight_length, movie_lengths, picks)
         times.append(time.time()-t)
     idxs = [x for x in range(10)]
-    plt.plot(idxs, times)
+    plt.plot(sizes, times)
+    plt.xlabel('len(movie_lengths)')
+    plt.ylabel('Runtime (sec)')
     plt.show()
 
 if __name__ == '__main__':
