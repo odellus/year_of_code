@@ -9,7 +9,6 @@ def _movie_picker(flight_length, movie_lengths):
     We will return the index of two movies who's combined length
     is equal to the flight length.
     """
-
     movie_idx = {x: k for (k, x) in enumerate(movie_lengths)}
     for val, idx in movie_idx.items():
         comp = flight_length - val
@@ -27,7 +26,6 @@ def movie_picker(flight_length, movie_lengths):
     We will return the index of two movies who's combined length
     is equal to the flight length.
     """
-
     movie_idx = {x: k for (k, x) in enumerate(movie_lengths)}
     res = []
     for val, idx in movie_idx.items():
@@ -49,8 +47,6 @@ print(picks)
 def get_movie_lengths(size):
     return np.random.randint(80, 200, size=(size,)).tolist()
 
-picks = movie_picker(flight_length, movie_lengths)
-print(picks)
 
 def time_algo(flight_length=240):
     sizes = [1000000*(k+1) for k in range(10)]
@@ -65,4 +61,5 @@ def time_algo(flight_length=240):
     plt.show()
 
 if __name__ == '__main__':
-    time_algo()
+    time_algo() # This should be a pretty close to identity
+    
